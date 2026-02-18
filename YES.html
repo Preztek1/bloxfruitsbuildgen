@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blox Fruits Build Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* slate-900 */
+            color: #f8fafc; /* slate-50 */
+        }
+
+        .sidebar {
+            width: 300px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background-color: #1e293b;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+            z-index: 20;
+            padding: 1rem;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+            overflow-y: auto;
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+        }
+
+        .menu-icon {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 30;
+            cursor: pointer;
+            color: #f8fafc;
+            transition: left 0.3s ease-in-out;
+        }
+
+        .sidebar.open + .menu-icon {
+            left: 320px;
+        }
+
+        .customizer-section {
+            background-color: #334155;
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+        .customizer-item label {
+            display: flex;
+            align-items: center;
+        }
+        .customizer-item input[type="checkbox"] {
+            margin-right: 0.5rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen flex items-center justify-center">
+
+    <!-- Sidebar Menu -->
+    <div id="sidebar" class="sidebar">
+        <h2 class="text-2xl font-bold mb-4 text-indigo-400">Customize Generator</h2>
+        <div class="space-y-6">
+            <div id="fighting-style-customizer" class="customizer-section"></div>
+            <div id="fruit-customizer" class="customizer-section"></div>
+            <div id="sword-customizer" class="customizer-section"></div>
+            <div id="gun-customizer" class="customizer-section"></div>
+            <div id="accessory-customizer" class="customizer-section"></div>
+            <div id="race-customizer" class="customizer-section"></div>
+        </div>
+
+        <div class="mt-8 pt-4 border-t border-slate-600">
+            <h3 class="text-xl font-bold mb-2 text-indigo-300">Share Build Code</h3>
+            <p class="text-slate-400 text-sm mb-2">Copy your current build code to share it with others.</p>
+            <input type="text" id="build-code-display" class="w-full bg-slate-700 text-slate-200 p-2 rounded-lg text-xs" readonly>
+            <button id="copy-btn" class="w-full mt-2 px-4 py-2 rounded-lg text-sm font-bold text-white bg-green-600 hover:bg-green-700 transition-colors">
+                <i class="fa-solid fa-copy mr-1"></i>Copy Current Build
+            </button>
+        </div>
+
+        <div class="mt-4 pt-4 border-t border-slate-600">
+            <h3 class="text-xl font-bold mb-2 text-indigo-300">Load Build Code</h3>
+            <p class="text-slate-400 text-sm mb-2">Paste a build code below to load it.</p>
+            <textarea id="build-code-area" rows="4" class="w-full bg-slate-700 text-slate-200 p-2 rounded-lg text-xs" placeholder="Paste your build code here..."></textarea>
+            <button id="paste-btn" class="w-full mt-2 px-4 py-2 rounded-lg text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 transition-colors">
+                <i class="fa-solid fa-paste mr-1"></i>Load from Code
+            </button>
+        </div>
+    </div>
+    <div id="menu-icon" class="menu-icon">
+        <i class="fa-solid fa-bars fa-2x"></i>
+    </div>
+
+    <div class="w-full max-w-4xl bg-slate-800 p-6 sm:p-8 rounded-xl shadow-lg border border-slate-700">
+        <h1 class="text-3xl sm:text-4xl font-bold text-center mb-6 text-indigo-400">Blox Fruits Build Generator</h1>
+        <p class="text-center text-slate-400 mb-8">Click Spin to roll a new build, then click on an item to add it to your current build.</p>
+
+        <!-- Current Build Display -->
+        <div class="bg-slate-900 p-4 sm:p-6 rounded-lg shadow-inner mb-8 border border-slate-700">
+            <h2 class="text-xl sm:text-2xl font-bold mb-4 text-center text-indigo-300">Your Current Build</h2>
+            <div id="current-build" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="bg-slate-700 p-3 rounded-lg text-center">
+                    <p class="text-sm font-semibold text-slate-400 mb-1">Fighting Style</p>
+                    <p id="fighting-style-build" class="text-lg font-bold">---</p>
+                </div>
+                <div class="bg-slate-700 p-3 rounded-lg text-center">
+                    <p class="text-sm font-semibold text-slate-400 mb-1">Fruit</p>
+                    <p id="fruit-build" class="text-lg font-bold">---</p>
+                </div>
+                <div class="bg-slate-700 p-3 rounded-lg text-center">
+                    <p class="text-sm font-semibold text-slate-400 mb-1">Sword</p>
+                    <p id="sword-build" class="text-lg font-bold">---</p>
+                </div>
+                <div class="bg-slate-700 p-3 rounded-lg text-center">
+                    <p class="text-sm font-semibold text-slate-400 mb-1">Gun</p>
+                    <p id="gun-build" class="text-lg font-bold">---</p>
+                </div>
+                <div class="bg-slate-700 p-3 rounded-lg text-center">
+                    <p class="text-sm font-semibold text-slate-400 mb-1">Accessory</p>
+                    <p id="accessory-build" class="text-lg font-bold">---</p>
+                </div>
+                <div class="bg-slate-700 p-3 rounded-lg text-center">
+                    <p class="text-sm font-semibold text-slate-400 mb-1">Race</p>
+                    <p id="race-build" class="text-lg font-bold">---</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Rolled Options Display -->
+        <div class="bg-slate-900 p-4 sm:p-6 rounded-lg shadow-inner mb-6 border border-slate-700">
+            <h2 class="text-xl sm:text-2xl font-bold mb-4 text-center text-indigo-300">Rolled Options</h2>
+            <div id="rolled-options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+            <button id="spin-btn" class="px-6 py-3 rounded-lg text-lg font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-md transform hover:scale-105 active:scale-95">
+                <i class="fa-solid fa-dice-three mr-2"></i>Spin
+            </button>
+            <button id="reset-btn" class="px-6 py-3 rounded-lg text-lg font-bold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-md transform hover:scale-105 active:scale-95">
+                <i class="fa-solid fa-rotate-left mr-2"></i>Reset
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // Data for Blox Fruits builds
+        const fightingStyles = ['Combat', 'Dark Step', 'Electric', 'Water Kung Fu', 'Dragon Breath', 'Superhuman', 'Death Step', 'Sharkman Karate', 'Electric Claw', 'Dragon Talon', 'Godhuman', 'Sanguine Art'];
+        const fruits = ['Rocket', 'Spin', 'Blade', 'Spring', 'Bomb', 'Smoke', 'Spike', 'Flame', 'Eagle', 'Ice', 'Sand', 'Dark', 'Diamond', 'Light', 'Rubber', 'Creation', 'Ghost', 'Magma', 'Quake', 'Buddha', 'Love', 'Spider', 'Sound', 'Phoenix', 'Portal', 'Lightning', 'Pain', 'Blizzard', 'Gravity', 'Mammoth', 'T-Rex', 'Dough', 'Shadow', 'Venom', 'Control', 'Spirit', 'Dragon', 'Leopard', 'Kitsune', 'Yeti', 'Gas'];
+        const swords = ['Cutlass', 'Dual Katana', 'Katana', 'Iron Mace', 'Shark Saw', 'Triple Katana', 'Twin Hooks', 'Dragon Trident', 'Dual-Headed Blade', 'Flail', 'Gravity Blade', 'Longsword', 'Pipe', 'Soul Cane', 'Trident', 'Warden’s Sword', 'Bisento', 'Buddy Sword', 'Canvander', 'Dark Dagger', 'Dragonheart', 'Fox Lamp', 'Koko', 'Midnight Blade', 'Oroshi', 'Pole (1st Form)', 'Pole (2nd Form)', 'Rengoku', 'Saber', 'Saishi', 'Shark Anchor', 'Shizu', 'Spikey Trident', 'Cursed Dual Katana', 'Dark Blade', 'Hallow Scythe', 'Triple Dark Blade', 'True Triple Katana', 'Tushita', 'Yama'];
+        const guns = ['Slingshot', 'Flintlock', 'Musket', 'Acidum Rifle', 'Bizarre Revolver', 'Cannon', 'Dual Flintlock', 'Magma Blaster', 'Refined Slingshot', 'Bazooka', 'Dragonstorm', 'Kabucha', 'Venom Bow', 'Skull Guitar'];
+        const accessories = ['Leviathan Shield', 'Dojo Belt (Black)', 'Dark Coat', 'Dino Hood', 'Leviathan Crown', 'Swan Glasses', 'Bandanna (Black)', 'Bandanna (Green)', 'Bandanna (Red)', 'Bear Ears', 'Black Cape', 'Black Spikey Coat', 'Blue Spikey Coat', 'Choppa', 'Coat', 'Cool Shades', 'Cupids Coat', 'D.S. Coat', 'Dojo Belt (Blue)', 'Dojo Belt (Green)', 'Dojo Belt (Orange)', 'Dojo Belt (Purple)', 'Dojo Belt (Red)', 'Dojo Belt (White)', 'Dojo Belt (Yellow)', 'Dragon Mantle', 'Elf Hat', 'Ghoul Mask', 'Golden Sunhat', 'Heart Shades', 'Holiday Cloak', 'Holy Crown', 'Hunter Cape (Black)', 'Hunter Cape (Green)', 'Hunter Cape (Red)', 'Jaw Shield', 'Kitsune Mask', 'Kitsune Ribbon', 'Lei', 'Marine Cap', 'Musketeer Hat', 'Oni Helmet', 'Pale Scarf', 'Party Hat', 'Pilot Helmet', 'Pink Coat', 'Pretty Helmet', 'Red Spikey Coat', 'Sanguine Cloak', 'Santa Hat', 'Shark Tooth Necklace', 'Swordsman Hat', 'T-Rex Skull', 'Terror Jaw', 'Tomoe Ring', 'Top Hat', 'Usoaps Hat', 'Uzoths Cloak', 'Valkyrie Helm', 'Warrior Helmet', 'Wyvern Helmet', 'Zebra Cap'];
+        const races = ['Human', 'Shark', 'Cyborg', 'Angel', 'Ghoul', 'Mink', 'Draco'];
+        const categories = {
+            'fighting-style': fightingStyles,
+            'fruit': fruits,
+            'sword': swords,
+            'gun': guns,
+            'accessory': accessories,
+            'race': races
+        };
+
+        const selectedOptions = {};
+        for (const category in categories) {
+            selectedOptions[category] = new Set(categories[category]);
+        }
+
+        const currentBuild = {
+            'fighting-style': null,
+            'fruit': null,
+            'sword': null,
+            'gun': null,
+            'accessory': null,
+            'race': null
+        };
+
+        let lastRolledItems = null;
+
+        const spinBtn = document.getElementById('spin-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const rolledOptionsContainer = document.getElementById('rolled-options-container');
+        const buildCodeDisplay = document.getElementById('build-code-display');
+
+        // New elements for the sidebar
+        const sidebar = document.getElementById('sidebar');
+        const menuIcon = document.getElementById('menu-icon');
+        const buildCodeArea = document.getElementById('build-code-area');
+        const copyBtn = document.getElementById('copy-btn');
+        const pasteBtn = document.getElementById('paste-btn');
+
+        // Function to update the UI with the current build
+        function updateBuildUI() {
+            document.getElementById('fighting-style-build').textContent = currentBuild['fighting-style'] || '---';
+            document.getElementById('fruit-build').textContent = currentBuild['fruit'] || '---';
+            document.getElementById('sword-build').textContent = currentBuild['sword'] || '---';
+            document.getElementById('gun-build').textContent = currentBuild['gun'] || '---';
+            document.getElementById('accessory-build').textContent = currentBuild['accessory'] || '---';
+            document.getElementById('race-build').textContent = currentBuild['race'] || '---';
+
+            // Update the copy code display
+            updateBuildCodeDisplay();
+
+            // Check if all items are picked to disable the spin button
+            const allPicked = Object.values(currentBuild).every(item => item !== null);
+            if (allPicked) {
+                spinBtn.disabled = true;
+                spinBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                spinBtn.disabled = false;
+                spinBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        function updateBuildCodeDisplay() {
+            const fullState = {
+                currentBuild: currentBuild,
+                selectedOptions: {}
+            };
+            for (const category in selectedOptions) {
+                fullState.selectedOptions[category] = Array.from(selectedOptions[category]);
+            }
+            buildCodeDisplay.value = JSON.stringify(fullState);
+        }
+
+        // Function to handle picking an item
+        function pickItem(category, item) {
+            if (!currentBuild[category]) {
+                currentBuild[category] = item;
+                updateBuildUI();
+                
+                // Disable all pick buttons in the current roll
+                document.querySelectorAll('#rolled-options-container button').forEach(button => {
+                    const buttonCategory = button.getAttribute('data-category');
+                    if (buttonCategory === category) {
+                        button.textContent = 'Picked';
+                    }
+                    button.disabled = true;
+                    button.classList.add('opacity-50', 'cursor-not-allowed');
+                });
+                
+                // Re-enable the spin button
+                spinBtn.disabled = false;
+                spinBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        // Function to render the rolled options with pick buttons
+        function renderRolledOptions(rolledItems = null) {
+            rolledOptionsContainer.innerHTML = ''; // Clear previous options
+
+            if (!rolledItems) {
+                rolledOptionsContainer.innerHTML = `<p class="text-center text-slate-400 col-span-1 md:col-span-2">Spin to see options</p>`;
+                return;
+            }
+
+            for (const category in rolledItems) {
+                const rolledItem = rolledItems[category];
+                const picked = currentBuild[category] !== null;
+                
+                const categoryContainer = document.createElement('div');
+                categoryContainer.className = `p-4 rounded-lg flex items-center justify-between ${picked ? 'bg-indigo-700' : 'bg-slate-700'}`;
+
+                const textContainer = document.createElement('div');
+                textContainer.innerHTML = `
+                    <p class="font-bold text-lg text-slate-300 capitalize">${category.replace('-', ' ')}</p>
+                    <p class="text-sm font-semibold text-slate-100">${rolledItem}</p>
+                `;
+                categoryContainer.appendChild(textContainer);
+
+                const pickBtn = document.createElement('button');
+                pickBtn.className = `px-4 py-2 rounded-lg text-sm font-bold transition-colors`;
+                pickBtn.textContent = 'Pick';
+                pickBtn.setAttribute('data-category', category);
+                
+                // Disable button if an item for this category has already been picked
+                if (picked) {
+                    pickBtn.textContent = 'Picked';
+                    pickBtn.disabled = true;
+                    pickBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    pickBtn.classList.remove('bg-indigo-400', 'hover:bg-indigo-500');
+                    pickBtn.classList.add('bg-slate-500');
+                } else {
+                    pickBtn.classList.add('bg-indigo-400', 'hover:bg-indigo-500');
+                    pickBtn.onclick = () => {
+                         pickItem(category, rolledItem);
+                         // After picking, disable all pick buttons for this roll
+                         document.querySelectorAll('#rolled-options-container button').forEach(btn => {
+                            btn.disabled = true;
+                            btn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-slate-500');
+                            btn.classList.remove('bg-indigo-400', 'hover:bg-indigo-500');
+                            if (btn.textContent === 'Pick') {
+                                btn.textContent = '---';
+                            }
+                         });
+                         pickBtn.textContent = 'Picked';
+                         // Re-enable the spin button
+                         spinBtn.disabled = false;
+                         spinBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    };
+                }
+                
+                categoryContainer.appendChild(pickBtn);
+                rolledOptionsContainer.appendChild(categoryContainer);
+            }
+        }
+
+        // Function to render the customizer options in the sidebar
+        function renderCustomizerOptions() {
+            // Clear existing options to prevent duplicates
+            for (const category in categories) {
+                const container = document.getElementById(`${category}-customizer`);
+                if (container) {
+                    container.innerHTML = '';
+                }
+            }
+            
+            for (const category in categories) {
+                const container = document.getElementById(`${category}-customizer`);
+                if (container) {
+                    const title = category.replace('-', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                    const heading = document.createElement('h3');
+                    heading.className = 'text-lg font-bold mb-2 text-indigo-300 capitalize';
+                    heading.textContent = title;
+                    container.appendChild(heading);
+
+                    const list = document.createElement('ul');
+                    list.className = 'space-y-1 text-sm';
+                    categories[category].forEach(item => {
+                        const li = document.createElement('li');
+                        li.className = 'customizer-item';
+                        const label = document.createElement('label');
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.checked = selectedOptions[category].has(item);
+                        checkbox.setAttribute('data-category', category);
+                        checkbox.setAttribute('data-item', item);
+                        checkbox.addEventListener('change', (e) => {
+                            if (e.target.checked) {
+                                selectedOptions[category].add(item);
+                            } else {
+                                selectedOptions[category].delete(item);
+                            }
+                            updateBuildCodeDisplay(); // Update the code every time an option changes
+                        });
+                        label.appendChild(checkbox);
+                        label.appendChild(document.createTextNode(item));
+                        li.appendChild(label);
+                        list.appendChild(li);
+                    });
+                    container.appendChild(list);
+                }
+            }
+        }
+
+        // Spin button handler
+        spinBtn.addEventListener('click', () => {
+            const rolledItems = {};
+            for (const category in categories) {
+                const rollableList = Array.from(selectedOptions[category]);
+                if (rollableList.length > 0) {
+                    rolledItems[category] = rollableList[Math.floor(Math.random() * rollableList.length)];
+                }
+            }
+            lastRolledItems = rolledItems;
+            renderRolledOptions(lastRolledItems);
+
+            // Disable spin button after a roll
+            spinBtn.disabled = true;
+            spinBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        });
+
+        // Reset button handler
+        resetBtn.addEventListener('click', () => {
+            for (const key in currentBuild) {
+                currentBuild[key] = null;
+            }
+            lastRolledItems = null;
+            updateBuildUI();
+            renderRolledOptions();
+        });
+
+        // Sidebar toggle handler
+        menuIcon.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+
+        // Copy button handler
+        copyBtn.addEventListener('click', () => {
+            buildCodeDisplay.select();
+            document.execCommand('copy');
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => {
+                copyBtn.innerHTML = `<i class="fa-solid fa-copy mr-1"></i>Copy Current Build`;
+            }, 2000);
+        });
+
+        // Paste button handler
+        pasteBtn.addEventListener('click', () => {
+            try {
+                const buildCode = buildCodeArea.value;
+                if (buildCode) {
+                    const parsedState = JSON.parse(buildCode);
+                    // Update current build
+                    Object.assign(currentBuild, parsedState.currentBuild);
+                    // Update selected options from the loaded data
+                    for (const category in parsedState.selectedOptions) {
+                        selectedOptions[category] = new Set(parsedState.selectedOptions[category]);
+                    }
+                    updateBuildUI();
+                    renderCustomizerOptions(); // Re-render the customizer checkboxes to reflect the loaded state
+                    renderRolledOptions(lastRolledItems);
+                }
+            } catch (e) {
+                console.error('Invalid build code:', e);
+                // Simple feedback to the user
+                pasteBtn.textContent = 'Invalid!';
+                setTimeout(() => {
+                    pasteBtn.innerHTML = `<i class="fa-solid fa-paste mr-1"></i>Load from Code`;
+                }, 2000);
+            }
+        });
+
+        // Initial render
+        document.addEventListener('DOMContentLoaded', () => {
+            updateBuildUI();
+            renderRolledOptions();
+            renderCustomizerOptions();
+        });
+    </script>
+</body>
+</html>
